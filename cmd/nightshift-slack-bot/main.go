@@ -71,11 +71,16 @@ func run(log *slog.Logger) error {
 		})
 	}
 	if cfg.HubSpotToken != "" {
+		// `hubspot-pat` rather than `hubspot` because the platform
+		// connector catalog already seeds `hubspot` as OAuth — names
+		// are unique platform-wide and CreateConnector with the same
+		// name + a different auth_type fails. Tool prefix follows the
+		// connector name, so allowed tools live under mcp__hubspot-pat__*.
 		connectors = append(connectors, seed.Connector{
-			Name:            "hubspot",
-			Description:     "HubSpot — CRM contacts, companies, deals, tickets",
+			Name:            "hubspot-pat",
+			Description:     "HubSpot (Private App token) — CRM contacts, companies, deals, tickets",
 			McpURL:          "https://mcp.hubspot.com",
-			McpAllowedTools: []string{"mcp__hubspot__*"},
+			McpAllowedTools: []string{"mcp__hubspot-pat__*"},
 			TokenSource:     func() string { return cfg.HubSpotToken },
 		})
 	}
