@@ -1,0 +1,13 @@
+{{- if .Values.skills.inline }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "slack-bot.fullname" . }}-skills
+  labels:
+    {{- include "slack-bot.labels" . | nindent 4 }}
+data:
+  {{- range $name, $content := .Values.skills.inline }}
+  {{ $name }}: |
+    {{- $content | nindent 4 }}
+  {{- end }}
+{{- end }}

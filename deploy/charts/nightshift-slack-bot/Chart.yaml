@@ -1,0 +1,15 @@
+apiVersion: v2
+name: nightshift-slack-bot
+description: Generic Slack bot that bridges @app_mention into nightshift runs.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.26.0-0"
+keywords:
+  - nightshift
+  - slack
+  - bot
+sources:
+  - https://github.com/nightshiftco/nightshift-slack-bot
+maintainers:
+  - name: nightshift

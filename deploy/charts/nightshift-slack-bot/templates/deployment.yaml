@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "slack-bot.fullname" . }}
+  labels:
+    {{- include "slack-bot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    type: Recreate    # in-memory thread→session state; rolling would duplicate sessions briefly
+  selector:
+    matchLabels:
+      {{- include "slack-bot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "slack-bot.labels" . | nindent 8 }}
+      annotations:
+        checksum/persona: {{ include (print $.Template.BasePath "/configmap-persona.yaml") . | sha256sum }}
+        {{- if .Values.skills.inline }}
+        checksum/skills: {{ include (print $.Template.BasePath "/configmap-skills.yaml") . | sha256sum }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "slack-bot.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: slack-bot
+          image: {{ include "slack-bot.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          env:
+            - name: BOT_NAME
+              value: {{ include "slack-bot.component" . | quote }}
+            - name: USER_ID
+              value: {{ required ".Values.userId is required (uuidgen-generated, stable across upgrades)" .Values.userId | quote }}
+            - name: NS_API_URL
+              value: {{ include "slack-bot.nightshiftAPIURL" . | quote }}
+            - name: PERSONA_PATH
+              value: /etc/persona/system.md
+            - name: SKILLS_DIR
+              value: /etc/skills
+            - name: RUN_MAX_WALL
+              value: {{ .Values.run.maxWall | quote }}
+            - name: POLL_INTERVAL
+              value: {{ .Values.run.pollInterval | quote }}
+            - name: POLL_MAX
+              value: {{ .Values.run.pollMax | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.logLevel | quote }}
+            - name: HEALTH_ADDR
+              value: ":8081"
+          envFrom:
+            - secretRef:
+                name: {{ required ".Values.secrets.slack is required" .Values.secrets.slack }}
+            - secretRef:
+                name: {{ required ".Values.secrets.nightshift is required" .Values.secrets.nightshift }}
+            - secretRef:
+                name: {{ required ".Values.secrets.github is required" .Values.secrets.github }}
+          ports:
+            - name: health
+              containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: persona
+              mountPath: /etc/persona
+              readOnly: true
+            {{- if .Values.skills.inline }}
+            - name: skills-override
+              mountPath: /etc/skills
+              readOnly: true
+            {{- end }}
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: persona
+          configMap:
+            name: {{ include "slack-bot.fullname" . }}-persona
+        {{- if .Values.skills.inline }}
+        - name: skills-override
+          configMap:
+            name: {{ include "slack-bot.fullname" . }}-skills
+        {{- end }}
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

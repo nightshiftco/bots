@@ -1,0 +1,10 @@
+{{ .Release.Name }} ({{ include "slack-bot.component" . }}) is starting in namespace {{ .Release.Namespace }}.
+
+Verify:
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+  kubectl -n {{ .Release.Namespace }} logs -l app.kubernetes.io/instance={{ .Release.Name }} --tail=50
+
+Once the pod is Ready, invite the bot to a Slack channel:
+  /invite @{{ include "slack-bot.component" . }}
+
+Then @mention it with a question.

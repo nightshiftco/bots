@@ -1,0 +1,73 @@
+# Per-deployment identity. bug-bot vs. an eventual triage-bot are
+# distinct Helm releases of the same chart.
+botName: ""                  # e.g. "bug-bot". Becomes app.kubernetes.io/component.
+userId: ""                   # UUID. Operator generates once via `uuidgen`; never rotates.
+
+image:
+  registry: public.ecr.aws/c7b4h2n5
+  repository: nightshift-slack-bot
+  tag: ""                    # empty → .Chart.AppVersion
+  pullPolicy: IfNotPresent
+
+replicas: 1                  # MVP: single replica (in-memory thread→session map).
+
+# Endpoint of nightshift-api inside the same cluster. Empty → derives
+# http://nightshift-nightshift-api.<release-namespace>.svc:8080,
+# matching the parent chart's default release name.
+nightshift:
+  apiUrl: ""
+
+# Names of pre-created K8s Secrets in the release namespace. Each must
+# carry the keys listed below; the chart references them via envFrom.
+secrets:
+  slack: nightshift-slack-bot-slack      # keys: SLACK_BOT_TOKEN, SLACK_APP_TOKEN
+  nightshift: nightshift-slack-bot-api   # keys: NS_ADMIN_TOKEN
+  github: nightshift-slack-bot-github    # keys: GITHUB_PAT
+
+persona:
+  # Mounted at /etc/persona/system.md via a rendered ConfigMap.
+  systemPrompt: |
+    You are bug-bot.
+
+# Skills shipped with the image at /etc/skills/. Set values.skills.inline
+# to a map of filename → file content to override the baked-in set.
+skills:
+  inline: {}
+
+run:
+  maxWall: 10m
+  pollInterval: 2s
+  pollMax: 15s
+
+logLevel: info
+
+serviceAccount:
+  create: true
+  name: ""
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+podSecurityContext:
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  runAsNonRoot: true
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+# Optional labels added to top-level objects.
+extraLabels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

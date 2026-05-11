@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "slack-bot.fullname" . }}-persona
+  labels:
+    {{- include "slack-bot.labels" . | nindent 4 }}
+data:
+  system.md: |
+    {{- .Values.persona.systemPrompt | nindent 4 }}
