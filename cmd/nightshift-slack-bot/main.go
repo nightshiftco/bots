@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync/atomic"
 	"syscall"
 
@@ -82,11 +83,14 @@ func run(log *slog.Logger) error {
 	}
 	log.Info("slack auth ok", "bot_user_id", authResp.UserID, "team", authResp.Team)
 
+	persona := loadPersona(cfg.PersonaPath, log)
+
 	sock := socketmode.New(web)
 
 	bot := slackbot.New(web, sock, ns, slackbot.Config{
 		BotUserID:    authResp.UserID,
 		UserID:       cfg.UserID,
+		Persona:      persona,
 		RunMaxWall:   cfg.RunMaxWall,
 		PollInterval: cfg.PollInterval,
 		PollMax:      cfg.PollMax,
@@ -97,6 +101,30 @@ func run(log *slog.Logger) error {
 		return fmt.Errorf("slack bot: %w", err)
 	}
 	return nil
+}
+
+// loadPersona reads the per-deployment system-prompt prefix written by
+// the chart's persona ConfigMap. Missing/empty file → no prefix. The
+// content is prepended verbatim to every CreateRun prompt by the
+// handler.
+func loadPersona(path string, log *slog.Logger) string {
+	if path == "" {
+		return ""
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Warn("persona: read failed; running without a persona prefix", "path", path, "err", err)
+		}
+		return ""
+	}
+	s := strings.TrimSpace(string(b))
+	if s == "" {
+		log.Info("persona: file present but empty; running without a persona prefix", "path", path)
+		return ""
+	}
+	log.Info("persona: loaded", "path", path, "chars", len(s))
+	return s
 }
 
 func startHealthServer(addr string, ready *atomic.Bool, log *slog.Logger) *http.Server {

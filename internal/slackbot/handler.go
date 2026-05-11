@@ -19,6 +19,7 @@ import (
 type Config struct {
 	BotUserID    string
 	UserID       string // the nightshift user_id this bot owns
+	Persona      string // optional system-prompt prefix prepended to every CreateRun prompt
 	RunMaxWall   time.Duration
 	PollInterval time.Duration
 	PollMax      time.Duration
@@ -107,9 +108,16 @@ func (b *Bot) handleAppMention(parent context.Context, ev *slackevents.AppMentio
 	_ = b.web.AddReactionContext(parent, "eyes", msgRef)
 	defer func() { _ = b.web.RemoveReactionContext(parent, "eyes", msgRef) }()
 
-	prompt := StripMention(ev.Text, b.cfg.BotUserID)
-	if strings.TrimSpace(prompt) == "" {
+	userText := StripMention(ev.Text, b.cfg.BotUserID)
+	if strings.TrimSpace(userText) == "" {
 		return
+	}
+	// Prepend the operator-configured persona as a per-run system prefix.
+	// nightshift's CreateRunRequest has no top-level system_prompt field,
+	// so this is the canonical way to inject deployment-level framing.
+	prompt := userText
+	if b.cfg.Persona != "" {
+		prompt = b.cfg.Persona + "\n\n---\n\nUser request:\n" + userText
 	}
 
 	threadTS := ev.ThreadTimeStamp
