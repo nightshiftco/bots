@@ -160,7 +160,18 @@ func (b *Bot) handleAppMention(parent context.Context, ev *slackevents.AppMentio
 		return
 	}
 
-	final, err := b.ns.LastEvent(ctx, runID)
+	// Re-fetch the run so we have the final event_count for paging the
+	// events list. WaitForTerminal returned the terminal status from
+	// its last poll; that response also had event_count, but we don't
+	// keep it — one extra GetRun isn't worth the plumbing.
+	terminalRun, err := b.ns.GetRun(ctx, runID)
+	if err != nil {
+		b.log.Error("getrun terminal", "run_id", runID, "err", err)
+		b.postError(ctx, ev.Channel, threadTS, fmt.Sprintf(":warning: run `%s` terminal=%s but couldn't refetch: %v", runID, status, err))
+		return
+	}
+
+	final, err := b.ns.LastEvent(ctx, runID, terminalRun.GetEventCount())
 	if err != nil {
 		b.log.Error("fetch last event", "run_id", runID, "err", err)
 		b.postError(ctx, ev.Channel, threadTS,

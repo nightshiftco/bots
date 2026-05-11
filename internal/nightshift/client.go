@@ -145,9 +145,17 @@ type FinalEvent struct {
 	Raw   map[string]any
 }
 
-func (c *Client) LastEvent(ctx context.Context, runID string) (*FinalEvent, error) {
-	p := fmt.Sprintf("/v1/runs/%s/events?page_size=1&order_by=%s",
-		url.PathEscape(runID), url.QueryEscape("index desc"))
+// LastEvent returns the highest-index StreamEvent of a run. The API
+// returns events in ascending order regardless of `order_by`, so we
+// fetch a large page and take the tail. eventCount lets callers bound
+// the page; pass 0 to use a default.
+func (c *Client) LastEvent(ctx context.Context, runID string, eventCount int64) (*FinalEvent, error) {
+	pageSize := eventCount
+	if pageSize <= 0 || pageSize > 500 {
+		pageSize = 500
+	}
+	p := fmt.Sprintf("/v1/runs/%s/events?page_size=%d",
+		url.PathEscape(runID), pageSize)
 	out := &nsv1.ListRunEventsResponse{}
 	if err := c.do(ctx, http.MethodGet, p, nil, out); err != nil {
 		return nil, err
@@ -156,7 +164,7 @@ func (c *Client) LastEvent(ctx context.Context, runID string) (*FinalEvent, erro
 	if len(events) == 0 {
 		return nil, errors.New("no events found")
 	}
-	ev := events[0]
+	ev := events[len(events)-1]
 	var raw map[string]any
 	if r := ev.GetRaw(); r != nil {
 		raw = r.AsMap()
