@@ -17,10 +17,13 @@
 #   - The two public.ecr.aws/c7b4h2n5 repos exist:
 #       nightshift-slack-bot (image)
 #       charts                (already shared with nightshift)
-#   - Repo secret AWS_ACCOUNT_ID is set.
-#   - IAM role arn:aws:iam::<account>:role/github-actions-release
-#     trusts THIS repo via OIDC and carries ecr-public:*
-#     + sts:GetServiceBearerToken.
+#   - Repo secrets AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY belong
+#     to IAM user `github-actions-bots-release` with the inline
+#     `ecr-public-push` policy (ecr-public:* + sts:GetServiceBearerToken).
+#     OIDC was attempted first; AWS rejected the GitHub JWTs from this
+#     repo with InvalidIdentityToken despite the OIDC provider being
+#     registered. Long-lived keys are the workaround until that's
+#     resolved.
 
 name: release
 
@@ -31,7 +34,6 @@ on:
 
 permissions:
   contents: write   # create GH release
-  id-token: write   # AWS OIDC
 
 jobs:
   release:
@@ -62,30 +64,11 @@ jobs:
           fi
           echo "VERSION=$version" >> "$GITHUB_ENV"
 
-      - name: Direct STS call (diagnostic)
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-        run: |
-          set +e
-          tok=$(curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
-          echo "JWT header:"
-          echo "${tok%%.*}" | tr '_-' '/+' | base64 -d 2>/dev/null
-          echo
-          aws sts assume-role-with-web-identity \
-            --role-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:role/github-actions-release-bots" \
-            --role-session-name diag \
-            --web-identity-token "$tok" \
-            --duration-seconds 900 2>&1
-          echo "----"
-          aws --version
-
-      - name: Configure AWS via OIDC
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-release-bots
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: ECR Public docker login
