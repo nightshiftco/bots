@@ -13,7 +13,7 @@ import (
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 
-	"github.com/nightshiftco/nightshift-slack-bot/internal/nightshift"
+	"github.com/nightshiftco/bots/internal/nightshift"
 )
 
 type Config struct {

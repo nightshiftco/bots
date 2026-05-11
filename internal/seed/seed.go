@@ -16,7 +16,7 @@ import (
 
 	nsv1 "github.com/nightshiftco/nightshift/gen/go/nightshift/v1"
 
-	"github.com/nightshiftco/nightshift-slack-bot/internal/nightshift"
+	"github.com/nightshiftco/bots/internal/nightshift"
 )
 
 type Config struct {

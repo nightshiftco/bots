@@ -10,7 +10,7 @@ COPY . .
 ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -trimpath \
-    -ldflags="-s -w -X github.com/nightshiftco/nightshift-slack-bot/internal/version.Version=${VERSION}" \
+    -ldflags="-s -w -X github.com/nightshiftco/bots/internal/version.Version=${VERSION}" \
     -o /out/nightshift-slack-bot ./cmd/nightshift-slack-bot
 
 FROM gcr.io/distroless/static:nonroot

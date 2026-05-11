@@ -1,4 +1,4 @@
-module github.com/nightshiftco/nightshift-slack-bot
+module github.com/nightshiftco/bots
 
 go 1.25.0
 

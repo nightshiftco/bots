@@ -10,6 +10,6 @@ keywords:
   - slack
   - bot
 sources:
-  - https://github.com/nightshiftco/nightshift-slack-bot
+  - https://github.com/nightshiftco/bots
 maintainers:
   - name: nightshift

@@ -14,11 +14,11 @@ import (
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
 
-	"github.com/nightshiftco/nightshift-slack-bot/internal/config"
-	nsclient "github.com/nightshiftco/nightshift-slack-bot/internal/nightshift"
-	"github.com/nightshiftco/nightshift-slack-bot/internal/seed"
-	"github.com/nightshiftco/nightshift-slack-bot/internal/slackbot"
-	"github.com/nightshiftco/nightshift-slack-bot/internal/version"
+	"github.com/nightshiftco/bots/internal/config"
+	nsclient "github.com/nightshiftco/bots/internal/nightshift"
+	"github.com/nightshiftco/bots/internal/seed"
+	"github.com/nightshiftco/bots/internal/slackbot"
+	"github.com/nightshiftco/bots/internal/version"
 )
 
 func main() {

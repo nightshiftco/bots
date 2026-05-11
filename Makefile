@@ -6,7 +6,7 @@ BIN := bin/nightshift-slack-bot
 PKG := ./cmd/nightshift-slack-bot
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-LDFLAGS := -s -w -X github.com/nightshiftco/nightshift-slack-bot/internal/version.Version=$(VERSION)
+LDFLAGS := -s -w -X github.com/nightshiftco/bots/internal/version.Version=$(VERSION)
 
 .PHONY: build vet test tidy lint chart-lint chart-template clean
 
