@@ -69,8 +69,14 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
+          # Diagnostic: length of each (should be 20 / 40 — no trailing chars)
+          echo "AKID length: ${#AWS_ACCESS_KEY_ID}"
+          echo "SAK length:  ${#AWS_SECRET_ACCESS_KEY}"
+          # First 4 chars of AKID (AKID prefix is not secret)
+          echo "AKID starts: ${AWS_ACCESS_KEY_ID:0:4}"
+          # Check for any non-printable bytes
+          echo "$AWS_ACCESS_KEY_ID" | od -c | head -2
           aws sts get-caller-identity
-          # Persist for subsequent steps in this job
           echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $GITHUB_ENV
 
