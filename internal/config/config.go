@@ -19,7 +19,8 @@ type Config struct {
 	SlackBotToken string
 	SlackAppToken string
 
-	GitHubPAT string
+	GitHubPAT    string
+	HubSpotToken string
 
 	PersonaPath string
 	SkillsDir   string
@@ -41,6 +42,7 @@ func Load() (*Config, error) {
 		SlackBotToken:    os.Getenv("SLACK_BOT_TOKEN"),
 		SlackAppToken:    os.Getenv("SLACK_APP_TOKEN"),
 		GitHubPAT:        os.Getenv("GITHUB_PAT"),
+		HubSpotToken:     os.Getenv("HUBSPOT_TOKEN"),
 		PersonaPath:      envOr("PERSONA_PATH", "/etc/persona/system.md"),
 		SkillsDir:        envOr("SKILLS_DIR", "/etc/skills"),
 		HealthAddr:       envOr("HEALTH_ADDR", ":8081"),
@@ -75,9 +77,6 @@ func Load() (*Config, error) {
 	}
 	if c.SlackAppToken == "" {
 		missing = append(missing, "SLACK_APP_TOKEN")
-	}
-	if c.GitHubPAT == "" {
-		missing = append(missing, "GITHUB_PAT")
 	}
 	if len(missing) > 0 {
 		return nil, fmt.Errorf("missing required env: %s", strings.Join(missing, ", "))

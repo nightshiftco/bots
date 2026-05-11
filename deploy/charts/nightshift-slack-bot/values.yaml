@@ -19,10 +19,14 @@ nightshift:
 
 # Names of pre-created K8s Secrets in the release namespace. Each must
 # carry the keys listed below; the chart references them via envFrom.
+# `slack` and `nightshift` are required. Connector secrets (`github`,
+# `hubspot`) are optional — leave empty to skip mounting and the bot
+# will not seed that connector.
 secrets:
-  slack: nightshift-slack-bot-slack      # keys: SLACK_BOT_TOKEN, SLACK_APP_TOKEN
-  nightshift: nightshift-slack-bot-api   # keys: NS_ADMIN_TOKEN
-  github: nightshift-slack-bot-github    # keys: GITHUB_PAT
+  slack: nightshift-slack-bot-slack      # required, keys: SLACK_BOT_TOKEN, SLACK_APP_TOKEN
+  nightshift: nightshift-slack-bot-api   # required, keys: NS_ADMIN_TOKEN
+  github: ""                             # optional, keys: GITHUB_PAT
+  hubspot: ""                            # optional, keys: HUBSPOT_TOKEN
 
 persona:
   # Mounted at /etc/persona/system.md via a rendered ConfigMap.

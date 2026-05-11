@@ -56,8 +56,14 @@ spec:
                 name: {{ required ".Values.secrets.slack is required" .Values.secrets.slack }}
             - secretRef:
                 name: {{ required ".Values.secrets.nightshift is required" .Values.secrets.nightshift }}
+            {{- if .Values.secrets.github }}
             - secretRef:
-                name: {{ required ".Values.secrets.github is required" .Values.secrets.github }}
+                name: {{ .Values.secrets.github }}
+            {{- end }}
+            {{- if .Values.secrets.hubspot }}
+            - secretRef:
+                name: {{ .Values.secrets.hubspot }}
+            {{- end }}
           ports:
             - name: health
               containerPort: 8081

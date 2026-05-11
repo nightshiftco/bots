@@ -20,15 +20,22 @@ named bot (e.g. `bug-bot`).
    ```
    Add `slack-bot-bug-bot` to `NS_AUTH_ADMIN_TOKENS` on the API
    (chart value `nightshift_api.auth.adminTokens`); restart the API.
-4. **K8s Secrets** in the target namespace:
+4. **K8s Secrets** in the target namespace. The slack + nightshift
+   Secrets are required; connector Secrets (github, hubspot) are
+   optional — create only the ones you want this bot to seed, and
+   reference them via the matching `secrets.*` value.
    ```
    kubectl -n <ns> create secret generic nightshift-slack-bot-slack \
      --from-literal=SLACK_BOT_TOKEN=xoxb-… \
      --from-literal=SLACK_APP_TOKEN=xapp-…
    kubectl -n <ns> create secret generic nightshift-slack-bot-api \
      --from-literal=NS_ADMIN_TOKEN="$ADMIN_TOKEN"
+   # Optional: GitHub connector
    kubectl -n <ns> create secret generic nightshift-slack-bot-github \
      --from-literal=GITHUB_PAT=ghp_…
+   # Optional: HubSpot connector (Private App access token)
+   kubectl -n <ns> create secret generic nightshift-slack-bot-hubspot \
+     --from-literal=HUBSPOT_TOKEN=pat-…
    ```
 
 ## Install

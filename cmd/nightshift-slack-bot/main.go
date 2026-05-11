@@ -60,14 +60,27 @@ func run(log *slog.Logger) error {
 		GitHubPAT: cfg.GitHubPAT,
 		SkillsDir: cfg.SkillsDir,
 	}
-	connectors := []seed.Connector{
-		{
+	var connectors []seed.Connector
+	if cfg.GitHubPAT != "" {
+		connectors = append(connectors, seed.Connector{
 			Name:            "github",
 			Description:     "GitHub — repositories, issues, pull requests",
 			McpURL:          "https://api.githubcopilot.com/mcp",
 			McpAllowedTools: []string{"mcp__github__*"},
 			TokenSource:     func() string { return cfg.GitHubPAT },
-		},
+		})
+	}
+	if cfg.HubSpotToken != "" {
+		connectors = append(connectors, seed.Connector{
+			Name:            "hubspot",
+			Description:     "HubSpot — CRM contacts, companies, deals, tickets",
+			McpURL:          "https://mcp.hubspot.com",
+			McpAllowedTools: []string{"mcp__hubspot__*"},
+			TokenSource:     func() string { return cfg.HubSpotToken },
+		})
+	}
+	if len(connectors) == 0 {
+		log.Warn("no connectors configured; set GITHUB_PAT and/or HUBSPOT_TOKEN to seed connectors")
 	}
 	if err := seed.Run(ctx, ns, seedCfg, connectors, log); err != nil {
 		return fmt.Errorf("seed: %w", err)
