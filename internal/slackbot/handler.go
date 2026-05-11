@@ -187,7 +187,7 @@ func (b *Bot) handleAppMention(parent context.Context, ev *slackevents.AppMentio
 		return
 	}
 
-	text := renderFinal(runID, status, final)
+	text := SlackifyMarkdown(renderFinal(runID, status, final))
 	for _, chunk := range ChunkForSlack(text) {
 		if _, _, err := b.web.PostMessageContext(ctx, ev.Channel,
 			slack.MsgOptionText(chunk, false),
